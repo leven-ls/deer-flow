@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import os
 import secrets
 from types import SimpleNamespace
 
 from deerflow.runtime.user_context import DEFAULT_USER_ID
 
 INTERNAL_AUTH_HEADER_NAME = "X-DeerFlow-Internal-Token"
-_INTERNAL_AUTH_TOKEN = secrets.token_urlsafe(32)
+USER_ID_HEADER_NAME = "X-User-Id"
+_INTERNAL_AUTH_TOKEN = os.environ.get("DEER_FLOW_INTERNAL_TOKEN") or secrets.token_urlsafe(32)
 
 
 def create_internal_auth_headers() -> dict[str, str]:
@@ -21,6 +23,10 @@ def is_valid_internal_auth_token(token: str | None) -> bool:
     return bool(token) and secrets.compare_digest(token, _INTERNAL_AUTH_TOKEN)
 
 
-def get_internal_user():
-    """Return the synthetic user used for trusted internal channel calls."""
-    return SimpleNamespace(id=DEFAULT_USER_ID, system_role="internal")
+def get_internal_user(user_id: str | None = None):
+    """Return the synthetic user used for trusted internal channel calls.
+
+    Args:
+        user_id: Optional user ID from upstream caller. Falls back to DEFAULT_USER_ID.
+    """
+    return SimpleNamespace(id=user_id or DEFAULT_USER_ID, system_role="internal")
