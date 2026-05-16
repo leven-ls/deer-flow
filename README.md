@@ -146,10 +146,10 @@ That prompt is intended for coding agents. It tells the agent to clone the repo 
        use_responses_api: true
        output_version: responses/v1
 
-     - name: qwen3-32b-vllm
-       display_name: Qwen3 32B (vLLM)
+     - name: qwen3-235b-vllm
+       display_name: Qwen3 235B A22B (vLLM)
        use: deerflow.models.vllm_provider:VllmChatModel
-       model: Qwen/Qwen3-32B
+       model: Qwen/Qwen3-235B-A22B
        api_key: $VLLM_API_KEY
        base_url: http://localhost:8000/v1
        supports_thinking: true

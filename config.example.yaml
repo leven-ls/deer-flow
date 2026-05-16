@@ -91,7 +91,7 @@ models:
   # Install: cd backend && uv pip install 'deerflow-harness[ollama]'
   #
   # - name: qwen3-local
-  #   display_name: Qwen3 32B (Ollama)
+  #   display_name: Qwen3 235B A22B (Ollama)
   #   use: langchain_ollama:ChatOllama
   #   model: qwen3:32b
   #   base_url: http://localhost:11434   # No /v1 suffix — uses native /api/chat
@@ -310,10 +310,10 @@ models:
   # extra_body.chat_template_kwargs.enable_thinking=true/false.
   # Some reasoning models also require the server to be started with
   # `vllm serve ... --reasoning-parser <parser>`.
-  # - name: qwen3-32b-vllm
-  #   display_name: Qwen3 32B (vLLM)
+  # - name: qwen3-235b-vllm
+  #   display_name: Qwen3 235B A22B (vLLM)
   #   use: deerflow.models.vllm_provider:VllmChatModel
-  #   model: Qwen/Qwen3-32B
+  #   model: Qwen/Qwen3-235B-A22B
   #   api_key: $VLLM_API_KEY
   #   base_url: http://localhost:8000/v1
   #   request_timeout: 600.0

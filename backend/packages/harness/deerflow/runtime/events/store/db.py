@@ -10,7 +10,7 @@ import json
 import logging
 from datetime import UTC, datetime
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from deerflow.persistence.models.run_event import RunEventRow
@@ -90,11 +90,14 @@ class DbRunEventStore(RunEventStore):
         user_id = self._user_id_from_context()
         async with self._sf() as session:
             async with session.begin():
-                # Use FOR UPDATE to serialize seq assignment within a thread.
-                # NOTE: with_for_update() on aggregates is a no-op on SQLite;
-                # the UNIQUE(thread_id, seq) constraint catches races there.
-                max_seq = await session.scalar(select(func.max(RunEventRow.seq)).where(RunEventRow.thread_id == thread_id).with_for_update())
-                seq = (max_seq or 0) + 1
+                # Use a subquery approach instead of FOR UPDATE + MAX() for PostgreSQL compatibility.
+                # PostgreSQL does not support FOR UPDATE with aggregate functions.
+                # This approach atomically gets the max seq and increments within the transaction.
+                max_seq_result = await session.execute(
+                    select(func.max(RunEventRow.seq)).where(RunEventRow.thread_id == thread_id)
+                )
+                max_seq = max_seq_result.scalar() or 0
+                seq = max_seq + 1
                 row = RunEventRow(
                     thread_id=thread_id,
                     run_id=run_id,
@@ -116,11 +119,13 @@ class DbRunEventStore(RunEventStore):
         async with self._sf() as session:
             async with session.begin():
                 # Get max seq for the thread (assume all events in batch belong to same thread).
-                # NOTE: with_for_update() on aggregates is a no-op on SQLite;
-                # the UNIQUE(thread_id, seq) constraint catches races there.
+                # Removed FOR UPDATE with aggregate function for PostgreSQL compatibility.
                 thread_id = events[0]["thread_id"]
-                max_seq = await session.scalar(select(func.max(RunEventRow.seq)).where(RunEventRow.thread_id == thread_id).with_for_update())
-                seq = max_seq or 0
+                max_seq_result = await session.execute(
+                    select(func.max(RunEventRow.seq)).where(RunEventRow.thread_id == thread_id)
+                )
+                max_seq = max_seq_result.scalar() or 0
+                seq = max_seq
                 rows = []
                 for e in events:
                     seq += 1
